@@ -9,7 +9,7 @@ RUN cd /geth && go run build/ci.go install -static ./cmd/geth
 # Fill the tests via rpctestgen.
 RUN git clone --depth 1 https://github.com/DarkFlorist/rpctestgen.git --branch eth_simulatev1 /rpctestgen
 RUN cd /rpctestgen && go build .
-RUN /rpctestgen/rpctestgen --bin /geth/build/bin/geth --tests multicall --out /rpctestgen/tests
+RUN /rpctestgen/rpctestgen --bin /geth/build/bin/geth -chain ./chain --tests multicall --out /rpctestgen/tests
 
 
 # To run local tests, copy the directory into the same as the simulator and
