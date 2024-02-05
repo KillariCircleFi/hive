@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -78,12 +79,29 @@ func (b *ContainerBackend) CreateContainer(ctx context.Context, imageName string
 	for key, val := range opt.Env {
 		vars = append(vars, key+"="+val)
 	}
+
+	hostConfig := &docker.HostConfig{}
+
+	// Adjust hostConfig for images containing "nethermind"
+	if strings.Contains(imageName, "nethermind") {
+		hostConfig.PortBindings = map[docker.Port][]docker.PortBinding{
+			"5005/tcp": []docker.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "5005",
+				},
+			},
+		}
+		println("WILL EXPOSE PORT 5005 ON NM IMAGE FOR DEBUGGING!")
+	}
+
 	createOpts := docker.CreateContainerOptions{
 		Context: ctx,
 		Config: &docker.Config{
 			Image: imageName,
 			Env:   vars,
 		},
+		HostConfig: hostConfig,
 	}
 
 	if opt.Input != nil {
@@ -189,6 +207,11 @@ func (b *ContainerBackend) StartContainer(ctx context.Context, containerID strin
 		info.Wait()
 		info.Wait = nil
 	}
+
+	fmt.Println("Sleeping for 30 seconds for you to atach debugger...")
+	time.Sleep(30 * time.Second) // Sleeps for 30 seconds
+	fmt.Println("Done sleeping.")
+
 	return info, checkErr
 }
 

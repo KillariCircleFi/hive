@@ -1,6 +1,7 @@
 package libhive
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -153,6 +155,27 @@ func (api *simAPI) endTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log15.Info("API: test ended", "suite", suiteID, "test", testID, "pass", result.Pass)
+	// Check if the test failed
+	if !result.Pass {
+		fmt.Println("The test failed. May I continue? ([yes]/no)")
+
+		// Create a new reader from standard input
+		reader := bufio.NewReader(os.Stdin)
+
+		// Read user input
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			log15.Error("Failed to read input", "error", err)
+			return
+		}
+
+		// Trim the input and check response
+		input = input[:len(input)-1] // Remove the newline character at the end
+
+		fmt.Println("Continuing...")
+		// Continue with your logic here
+
+	}
 	serveOK(w)
 }
 

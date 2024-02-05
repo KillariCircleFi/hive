@@ -4,3 +4,10 @@
 # Ignore any local build artifacts and runtime caches
 hive
 workspace
+**/.vs
+**/.git
+**/.gitignore
+**/node_modules
+**/npm-debug.log
+**/artifacts
+.DS_Store
