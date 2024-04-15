@@ -46,8 +46,8 @@ jobs:
           command: "tar -C /tmp/build -czf /tmp/build/workspace.tar.gz workspace"
           when: always
       - store_artifacts:
-            path: /tmp/build/workspace.tar.gz
-            destination: workspace.tar.gz
+          path: /tmp/build/workspace.tar.gz
+          destination: workspace.tar.gz
 
   # This job runs the go unit tests.
   go-test:
