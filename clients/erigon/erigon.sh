@@ -131,13 +131,16 @@ FLAGS="$FLAGS --http --http.addr=0.0.0.0 --http.api=admin,debug,eth,net,txpool,w
 FLAGS="$FLAGS --ws --ws.port=8546"
 
 # Increase blob slots for tests
-FLAGS="$FLAGS --txpool.blobslots=1000"
+FLAGS="$FLAGS --txpool.blobslots=1000 --txpool.totalblobpoollimit=10000"
 
 if [ "$HIVE_TERMINAL_TOTAL_DIFFICULTY" != "" ]; then
     JWT_SECRET="0x7365637265747365637265747365637265747365637265747365637265747365"
     echo -n $JWT_SECRET > /jwt.secret
     FLAGS="$FLAGS --authrpc.addr=0.0.0.0 --authrpc.jwtsecret=/jwt.secret"
 fi
+
+# Configure snapshots.
+FLAGS="$FLAGS --snapshots=false"
 
 # Launch the main client.
 FLAGS="$FLAGS --nat=none"

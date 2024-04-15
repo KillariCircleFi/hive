@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/hive/simulators/ethereum/engine/clmock"
 	"github.com/ethereum/hive/simulators/ethereum/engine/config"
+	"github.com/ethereum/hive/simulators/ethereum/engine/globals"
 	"github.com/ethereum/hive/simulators/ethereum/engine/helper"
 	"github.com/ethereum/hive/simulators/ethereum/engine/test"
 )
@@ -14,7 +15,6 @@ type InvalidPayloadAttributesTest struct {
 	Description string
 	Customizer  helper.PayloadAttributesCustomizer
 	Syncing     bool
-	ErrorOnSync bool
 }
 
 func (s InvalidPayloadAttributesTest) WithMainFork(fork config.Fork) test.Spec {
@@ -69,15 +69,11 @@ func (tc InvalidPayloadAttributesTest) Execute(t *test.Env) {
 			if tc.Syncing {
 				// If we are SYNCING, the outcome should be SYNCING regardless of the validity of the payload atttributes
 				r := t.TestEngine.TestEngineForkchoiceUpdated(&fcu, attr, t.CLMock.LatestPayloadBuilt.Timestamp)
-				if tc.ErrorOnSync {
-					r.ExpectError()
-				} else {
-					r.ExpectPayloadStatus(test.Syncing)
-					r.ExpectPayloadID(nil)
-				}
+				r.ExpectPayloadStatus(test.Syncing)
+				r.ExpectPayloadID(nil)
 			} else {
 				r := t.TestEngine.TestEngineForkchoiceUpdated(&fcu, attr, t.CLMock.LatestPayloadBuilt.Timestamp)
-				r.ExpectError()
+				r.ExpectErrorCode(*globals.INVALID_PAYLOAD_ATTRIBUTES)
 
 				// Check that the forkchoice was applied, regardless of the error
 				s := t.TestEngine.TestHeaderByNumber(Head)
