@@ -4,9 +4,10 @@
   build_args:
     github: s1na/go-ethereum
     tag: multicall
- - client: nethermind
-   nametag: multicall-git
-   dockerfile: git
-   build_args:
+
+- client: nethermind
+  nametag: multicall-git
+  dockerfile: git
+  build_args:
     github: NethermindEth/nethermind
-    tag: feature/eth_simulate
+    tag: feature/eth_multicall
