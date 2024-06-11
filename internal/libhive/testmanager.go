@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,6 +34,7 @@ type SimEnv struct {
 	// Parameters of simulation.
 	SimLogLevel    int
 	SimParallelism int
+	SimRandomSeed  int
 	SimTestPattern string
 
 	// This is the time limit for the simulation run.
@@ -62,7 +62,7 @@ type SimResult struct {
 type TestManager struct {
 	config     SimEnv
 	backend    ContainerBackend
-	clientDefs map[string]*ClientDefinition
+	clientDefs []*ClientDefinition
 
 	simContainerID string
 	simLogFile     string
@@ -81,7 +81,7 @@ type TestManager struct {
 	results           map[TestSuiteID]*TestSuite
 }
 
-func NewTestManager(config SimEnv, b ContainerBackend, clients map[string]*ClientDefinition) *TestManager {
+func NewTestManager(config SimEnv, b ContainerBackend, clients []*ClientDefinition) *TestManager {
 	return &TestManager{
 		clientDefs:        clients,
 		config:            config,
@@ -594,5 +594,5 @@ func writeSuiteFile(s *TestSuite, logdir string) error {
 	suiteFileName := fmt.Sprintf("%v-%x.json", time.Now().Unix(), b)
 	suiteFile := filepath.Join(logdir, suiteFileName)
 	// Write it.
-	return ioutil.WriteFile(suiteFile, suiteData, 0644)
+	return os.WriteFile(suiteFile, suiteData, 0644)
 }

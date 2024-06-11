@@ -62,6 +62,8 @@ def ethash_engine:
           (env.HIVE_FORK_CONSTANTINOPLE|to_hex//""): 2000000,
           (env.HIVE_FORK_MUIR_GLACIER|to_hex//""): 4000000,
           (env.HIVE_FORK_LONDON|to_hex//""): 700000,
+          (env.HIVE_FORK_ARROW_GLACIER|to_hex//""): 1000000,
+          (env.HIVE_FORK_GRAY_GLACIER|to_hex//""): 700000,
         }
       }
     }
@@ -169,6 +171,7 @@ def clique_engine:
     "baseFeePerGas": .baseFeePerGas,
     "blobGasUsed": .blobGasUsed,
     "excessBlobGas": .excessBlobGas,
+    "parentBeaconBlockRoot": .parentBeaconBlockRoot,
   },
   "accounts": ((.alloc|with_entries(.key|="0x"+.)) * {
     "0x0000000000000000000000000000000000000001": {
