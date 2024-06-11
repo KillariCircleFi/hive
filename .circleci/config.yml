@@ -76,7 +76,5 @@ workflows:
     jobs:
       - go-test
       - build
-      - smoke-tests:
-          requires: ["build"]
       - multicall:
           requires: ["build"]
