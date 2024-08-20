@@ -10,4 +10,4 @@
   dockerfile: git
   build_args:
     github: NethermindEth/nethermind
-    tag: feature/eth_simulate_fix
+    tag: feature/eth_simulate_logs_fix
