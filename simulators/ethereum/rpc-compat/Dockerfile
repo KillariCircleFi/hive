@@ -1,5 +1,5 @@
 # This simulation runs JSON-RPC API tests.
-FROM golang:1.23-alpine as builder
+FROM golang:1.22-alpine as builder
 RUN apk add --update git ca-certificates gcc musl-dev linux-headers
 
 # Clone and build geth.
