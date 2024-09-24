@@ -11,3 +11,10 @@
   build_args:
     github: NethermindEth/nethermind
     tag: feature/eth_simulate_logs_fix
+
+- client: reth
+  nametag: multicall-git
+  dockerfile: git
+  build_args:
+    github: paradigmxyz/reth
+    tag: main
