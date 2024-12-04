@@ -30,8 +30,8 @@ def to_bool:
 
 # Pads storage keys to 32 bytes.
 def pad_storage_keys:
-  .alloc |= with_entries(
-    .value.storage |= with_entries(
+  .alloc |= (if . == null then . else with_entries(
+    .value.storage |= (if . == null then . else with_entries(
       .key |= (if . == null then . else
                  if startswith("0x") then
                    "0x" + (.[2:] | if length < 64 then ("0" * (64 - length)) + . else . end)
@@ -39,8 +39,8 @@ def pad_storage_keys:
                    "0x" + (if length < 64 then ("0" * (64 - length)) + . else . end)
                  end
                end)
-    )
-  )
+    ) end)
+  ) end)
 ;
 
 # Replace config in input.
@@ -72,5 +72,6 @@ def pad_storage_keys:
     "terminalTotalDifficulty": env.HIVE_TERMINAL_TOTAL_DIFFICULTY|to_int,
     "shanghaiTime": env.HIVE_SHANGHAI_TIMESTAMP|to_int,
     "cancunTime": env.HIVE_CANCUN_TIMESTAMP|to_int,
+    "pragueTime": env.HIVE_PRAGUE_TIMESTAMP|to_int,
   }
 } | pad_storage_keys | remove_empty
