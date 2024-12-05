@@ -2,12 +2,12 @@
   nametag: multicall-git
   dockerfile: git
   build_args:
-    github: s1na/go-ethereum
-    tag: multicall
+    github: ethereum/go-ethereum
+    tag: master
 
 - client: nethermind
   nametag: multicall-git
   dockerfile: git
   build_args:
     github: NethermindEth/nethermind
-    tag: feature/eth_multicall
+    tag: master
