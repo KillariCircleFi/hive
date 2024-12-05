@@ -1,15 +1,15 @@
 # This simulation runs JSON-RPC API tests.
-FROM golang:1-alpine as builder
+FROM golang:1.22-alpine as builder
 RUN apk add --update git ca-certificates gcc musl-dev linux-headers
 
 # Clone and build geth.
-RUN git clone --depth 1 https://github.com/s1na/go-ethereum.git --branch multicall /geth
+RUN git clone --depth 1 https://github.com/ethereum/go-ethereum.git --branch master /geth
 RUN cd /geth && go run build/ci.go install -static ./cmd/geth
 
 # Fill the tests via rpctestgen.
-RUN git clone --depth 1 https://github.com/KillariDev/rpctestgen.git --branch multicall-blockhash /rpctestgen
+RUN git clone --depth 1 https://github.com/DarkFlorist/rpctestgen.git --branch eth_simulatev1 /rpctestgen
 RUN cd /rpctestgen && go build .
-RUN /rpctestgen/rpctestgen --bin /geth/build/bin/geth --tests multicall --out /rpctestgen/tests
+RUN cd /rpctestgen && ./rpctestgen --bin ../geth/build/bin/geth -chain ./chain --tests simulate
 
 
 # To run local tests, copy the directory into the same as the simulator and
