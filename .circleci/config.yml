@@ -24,7 +24,7 @@ jobs:
   # hive needs to be able to talk to the docker containers it creates.
   smoke-tests:
     machine:
-      image: ubuntu-2204:2024.04.4
+      image: default
     steps:
       - checkout
       - attach_workspace: {at: "/tmp/build"}
@@ -35,7 +35,7 @@ jobs:
 
   multicall:
     machine:
-      image: ubuntu-2204:2024.04.4
+      image: default
     steps:
       - checkout
       - attach_workspace: {at: "/tmp/build"}

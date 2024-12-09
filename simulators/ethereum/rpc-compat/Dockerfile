@@ -3,7 +3,7 @@ FROM golang:1.22-alpine as builder
 RUN apk add --update git ca-certificates gcc musl-dev linux-headers
 
 # Clone and build geth.
-RUN git clone --depth 1 https://github.com/s1na/go-ethereum.git --branch multicall /geth
+RUN git clone --depth 1 https://github.com/ethereum/go-ethereum.git --branch master /geth
 RUN cd /geth && go run build/ci.go install -static ./cmd/geth
 
 # Fill the tests via rpctestgen.

@@ -3,18 +3,20 @@ package libdocker
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"regexp"
 
 	"github.com/ethereum/hive/internal/libhive"
 	docker "github.com/fsouza/go-dockerclient"
-	"gopkg.in/inconshreveable/log15.v2"
 )
+
+const apiVersion = "1.25"
 
 // Config is the configuration of the docker backend.
 type Config struct {
 	Inventory libhive.Inventory
 
-	Logger log15.Logger
+	Logger *slog.Logger
 
 	// When building containers, any client or simulator image build matching the pattern
 	// will avoid the docker cache.
@@ -34,14 +36,14 @@ type Config struct {
 func Connect(dockerEndpoint string, cfg *Config) (*Builder, *ContainerBackend, error) {
 	logger := cfg.Logger
 	if logger == nil {
-		logger = log15.Root()
+		logger = slog.Default()
 	}
 	var client *docker.Client
 	var err error
 	if dockerEndpoint == "" {
-		client, err = docker.NewClientFromEnv()
+		client, err = docker.NewVersionedClientFromEnv(apiVersion)
 	} else {
-		client, err = docker.NewClient(dockerEndpoint)
+		client, err = docker.NewVersionedClient(dockerEndpoint, apiVersion)
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't connect to docker: %v", err)
