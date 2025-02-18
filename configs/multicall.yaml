@@ -1,16 +1,16 @@
 - client: go-ethereum
-  nametag: multicall-git
+  nametag: master-git
   dockerfile: git
   build_args:
     github: ethereum/go-ethereum
     tag: master
 
 - client: nethermind
-  nametag: multicall-git
+  nametag: master-git
   dockerfile: git
   build_args:
     github: NethermindEth/nethermind
-    tag: eth_simulate_v1
+    tag: master
 
 - client: reth
   nametag: multicall-git
