@@ -2,6 +2,15 @@
 
 FROM node:20-alpine as build
 
+
+# TODO: This should work like other EL clients and use
+# a docker image from the registry. The git build approach is
+# used in Dockerfile.git
+#
+#  ARG baseimage=ethpandaops/ethereumjs
+#  ARG tag=main
+#  FROM $baseimage:$tag
+
 ARG github=ethereumjs/ethereumjs-monorepo
 ARG tag=master
 

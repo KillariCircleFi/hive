@@ -2,14 +2,17 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::suites::environment::PortalNetwork;
-use crate::suites::state::constants::{CONTENT_KEY, TEST_DATA_FILE_PATH, TRIN_BRIDGE_CLIENT_TYPE};
+use crate::suites::state::constants::{
+    ACCOUNT_TRIE_NODE_KEY, TEST_DATA_FILE_PATH, TRIN_BRIDGE_CLIENT_TYPE,
+};
 use alloy_primitives::Bytes;
 use alloy_rlp::Decodable;
+use anyhow::Result;
 use ethportal_api::jsonrpsee::http_client::HttpClient;
 use ethportal_api::types::execution::header_with_proof::{
     BlockHeaderProof, HeaderWithProof, SszNone,
 };
-use ethportal_api::types::portal::{FindContentInfo, GetContentInfo};
+use ethportal_api::types::portal::{FindContentInfo, GetContentInfo, PutContentInfo};
 use ethportal_api::types::portal_wire::MAX_PORTAL_CONTENT_PAYLOAD_SIZE;
 use ethportal_api::utils::bytes::hex_encode;
 use ethportal_api::{
@@ -19,7 +22,6 @@ use ethportal_api::{
 use hivesim::types::ClientDefinition;
 use hivesim::{dyn_async, Client, NClientTestSpec, Test};
 use itertools::Itertools;
-use serde_json::json;
 use serde_yaml::Value;
 use tokio::time::Duration;
 
@@ -91,6 +93,40 @@ fn process_content(content: Vec<TestData>) -> Vec<ProcessedContent> {
     result
 }
 
+fn parse_test_values() -> Result<Vec<TestData>> {
+    let values = std::fs::read_to_string(TEST_DATA_FILE_PATH).expect("cannot find test asset");
+    let values: Value = serde_yaml::from_str(&values)?;
+    values
+        .as_sequence()
+        .expect("to find sequence of test values")
+        .iter()
+        .map(|value| {
+            let header_bytes: Bytes = serde_yaml::from_value(value["block_header"].clone())?;
+            let header = Header::decode(&mut header_bytes.as_ref())?;
+            let key: StateContentKey = serde_yaml::from_value(value["content_key"].clone())?;
+            let raw_offer_value = Bytes::from_str(
+                value["content_value_offer"]
+                    .as_str()
+                    .expect("to find content value offer"),
+            )?;
+            let offer_value = StateContentValue::decode(&key, raw_offer_value.as_ref())?;
+            let raw_lookup_value = Bytes::from_str(
+                value["content_value_retrieval"]
+                    .as_str()
+                    .expect("to find content value retrieval"),
+            )?;
+            let lookup_value = StateContentValue::decode(&key, raw_lookup_value.as_ref())?;
+
+            Ok(TestData {
+                header,
+                key,
+                offer_value,
+                lookup_value,
+            })
+        })
+        .collect()
+}
+
 dyn_async! {
    pub async fn test_portal_state_interop<'a> (test: &'a mut Test, _client: Option<Client>) {
         // Get all available portal clients
@@ -101,21 +137,7 @@ dyn_async! {
         let environment = Some(HashMap::from([PortalNetwork::as_environment_flag([PortalNetwork::State, PortalNetwork::History])]));
         let environments = Some(vec![environment.clone(), environment]);
 
-        let values = std::fs::read_to_string(TEST_DATA_FILE_PATH)
-            .expect("cannot find test asset");
-        let values: Value = serde_yaml::from_str(&values).unwrap();
-        let content: Vec<TestData> = values.as_sequence().unwrap().iter().map(|value| {
-            let header_bytes: Bytes = serde_yaml::from_value(value["block_header"].clone()).unwrap();
-            let header = Header::decode(&mut header_bytes.as_ref()).unwrap();
-            let key: StateContentKey =
-                serde_yaml::from_value(value["content_key"].clone()).unwrap();
-            let raw_offer_value = Bytes::from_str(value["content_value_offer"].as_str().unwrap()).unwrap();
-            let offer_value = StateContentValue::decode(&key, raw_offer_value.as_ref()).expect("unable to decode content value");
-            let raw_lookup_value = Bytes::from_str(value["content_value_retrieval"].as_str().unwrap()).unwrap();
-            let lookup_value = StateContentValue::decode(&key, raw_lookup_value.as_ref()).expect("unable to decode content value");
-
-            TestData { header, key, offer_value, lookup_value }
-        }).collect();
+        let content = parse_test_values().expect("unable to parse test values");
 
         // Iterate over all possible pairings of clients and run the tests (including self-pairings)
         for (client_a, client_b) in clients.iter().cartesian_product(clients.iter()) {
@@ -196,10 +218,10 @@ dyn_async! {
             // Test gossiping a collection of blocks to node B (B will gossip back to A)
             test.run(
                 NClientTestSpec {
-                    name: format!("GOSSIP blocks from A:{} --> B:{}", client_a.name, client_b.name),
+                    name: format!("PUT CONTENT blocks from A:{} --> B:{}", client_a.name, client_b.name),
                     description: "".to_string(),
                     always_run: false,
-                    run: test_gossip_two_nodes,
+                    run: test_put_content_two_nodes,
                     environments: environments.clone(),
                     test_data: content.clone(),
                     clients: vec![client_a.clone(), client_b.clone()],
@@ -216,14 +238,14 @@ dyn_async! {
             Some((client_a, client_b)) => (client_a, client_b),
             None => panic!("Unable to get expected amount of clients from NClientTestSpec"),
         };
-        let header_with_proof_key: StateContentKey = serde_json::from_value(json!(CONTENT_KEY)).unwrap();
+        let account_trie_node_key = ACCOUNT_TRIE_NODE_KEY.clone();
 
         let target_enr = match client_b.rpc.node_info().await {
             Ok(node_info) => node_info.enr,
             Err(err) => panic!("Error getting node info: {err:?}"),
         };
 
-        let result = client_a.rpc.find_content(target_enr, header_with_proof_key.clone()).await;
+        let result = client_a.rpc.find_content(target_enr, account_trie_node_key.clone()).await;
 
         match result {
             Ok(FindContentInfo::Enrs { enrs }) => if !enrs.is_empty() {
@@ -439,7 +461,7 @@ dyn_async! {
 }
 
 dyn_async! {
-    async fn test_gossip_two_nodes<'a> (clients: Vec<Client>, test_data: Vec<TestData>) {
+    async fn test_put_content_two_nodes<'a> (clients: Vec<Client>, test_data: Vec<TestData>) {
         let (client_a, client_b) = match clients.iter().collect_tuple() {
             Some((client_a, client_b)) => (client_a, client_b),
             None => panic!("Unable to get expected amount of clients from NClientTestSpec"),
@@ -461,10 +483,10 @@ dyn_async! {
         for TestData { header, key: content_key, offer_value: content_offer_value, .. } in test_data.clone() {
             store_header(header, &client_b.rpc).await;
 
-            match client_a.rpc.gossip(content_key.clone(), content_offer_value.encode()).await {
-                Ok(nodes_gossiped_to) => {
-                   if nodes_gossiped_to != 1 {
-                        panic!("We expected to gossip to 1 node instead we gossiped to: {nodes_gossiped_to}");
+            match client_a.rpc.put_content(content_key.clone(), content_offer_value.encode()).await {
+                Ok(PutContentInfo { peer_count, .. }) => {
+                   if peer_count != 1 {
+                        panic!("We expected to gossip to 1 node instead we gossiped to: {peer_count}");
                     }
                 }
                 Err(err) => panic!("Unable to get received content: {err:?}"),
