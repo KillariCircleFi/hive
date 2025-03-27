@@ -13,8 +13,9 @@ RUN ls -la
 WORKDIR /go/go-ethereum
 RUN apk add --update bash curl jq git make gcc libc-dev linux-headers
 ENV DLV=true
-RUN make geth
-# RUN go build -gcflags="all=-N -l" -o ./build/bin/geth ./cmd/geth
+# RUN make geth
+# RUN /usr/local/go/bin/go build -ldflags "--buildid=none -X github.com/ethereum/go-ethereum/internal/version.gitCommit=71e9c9b8a732b33f50b4565627463fb252b4aeff -X github.com/ethereum/go-ethereum/internal/version.gitDate=20250324 -extldflags '-Wl,-z,stack-size=0x800000,--build-id=none'" -tags urfave_cli_no_docs,ckzg -gcflags "all=-N -l" -v -o /go/go-ethereum/build/bin/geth ./cmd/geth
+RUN go build -gcflags="all=-N -l" -o ./build/bin/geth ./cmd/geth
 RUN mv ./build/bin/geth /usr/local/bin/geth
 
 FROM alpine:latest

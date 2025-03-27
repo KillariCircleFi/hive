@@ -27,10 +27,10 @@
 #     github: paradigmxyz/reth
 #     tag: main
 
-# - client: go-ethereum
-#   nametag: debug
-#   dockerfile: debug
-
-- client: nethermind
+- client: go-ethereum
   nametag: debug
   dockerfile: debug
+
+# - client: nethermind
+#   nametag: debug
+#   dockerfile: debug
