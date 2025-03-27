@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
+	// "time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/hive/hivesim"
@@ -78,7 +78,7 @@ func runAllTests(t *hivesim.T, c *hivesim.Client, clientName string) {
 
 func runTest(t *hivesim.T, c *hivesim.Client, test *rpcTest) error {
 	var (
-		client    = &http.Client{Timeout: 5 * time.Second}
+		client    = &http.Client{}
 		url       = fmt.Sprintf("http://%s", net.JoinHostPort(c.IP.String(), "8545"))
 		err       error
 		respBytes []byte

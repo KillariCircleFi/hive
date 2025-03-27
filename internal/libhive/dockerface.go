@@ -21,7 +21,7 @@ type ContainerBackend interface {
 
 	// These methods work with containers.
 	CreateContainer(ctx context.Context, image string, opt ContainerOptions) (string, error)
-	StartContainer(ctx context.Context, containerID string, opt ContainerOptions) (*ContainerInfo, error)
+	StartContainer(ctx context.Context, containerID string, opt ContainerOptions, imageName ...string) (*ContainerInfo, error)
 	DeleteContainer(containerID string) error
 	PauseContainer(containerID string) error
 	UnpauseContainer(containerID string) error
