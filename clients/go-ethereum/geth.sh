@@ -169,4 +169,8 @@ FLAGS="$FLAGS --nat=none"
 # Disable disk space free monitor
 FLAGS="$FLAGS --datadir.minfreedisk=0"
 echo "Running go-ethereum with flags $FLAGS"
-$geth $FLAGS
+if [ "$DLV" != "" ]; then
+    dlv --listen=0.0.0.0:2345 --headless=true --api-version=2 --accept-multiclient exec -- $geth $FLAGS
+else
+    $geth $FLAGS
+fi

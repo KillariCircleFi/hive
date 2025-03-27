@@ -1,6 +1,7 @@
 package libhive
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"log/slog"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -161,6 +163,26 @@ func (api *simAPI) endTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("API: test ended", "suite", suiteID, "test", testID, "pass", result.Pass)
+
+	if ! result.Pass {
+		fmt.Println("API: test failed, please enter to continue")
+	} else {
+		fmt.Println("API: test passed, please enter to continue")
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, err := reader.ReadString('\n')
+
+	if err != nil {
+		slog.Error("API: could not read input", "error", err)
+		return
+	}
+
+	input = strings.TrimSuffix(input, "\n")
+
+	fmt.Println("API: input was", input, "Continuing....")
+
 	serveOK(w)
 }
 
@@ -283,7 +305,7 @@ func (api *simAPI) startClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Start it!
-	info, err := api.backend.StartContainer(ctx, containerID, options)
+	info, err := api.backend.StartContainer(ctx, containerID, options, clientDef.Name)
 	if info != nil {
 		clientInfo := &ClientInfo{
 			ID:             info.ID,

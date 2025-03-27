@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -78,12 +79,75 @@ func (b *ContainerBackend) CreateContainer(ctx context.Context, imageName string
 	for key, val := range opt.Env {
 		vars = append(vars, key+"="+val)
 	}
-	createOpts := docker.CreateContainerOptions{
-		Context: ctx,
-		Config: &docker.Config{
-			Image: imageName,
-			Env:   vars,
-		},
+
+	hostConfig := &docker.HostConfig{}
+
+	var createOpts docker.CreateContainerOptions
+
+	// Adjust hostConfig for images containing "nethermind"
+	if strings.Contains(imageName, "nethermind_debug") {
+		hostConfig.PortBindings = map[docker.Port][]docker.PortBinding{
+			"5005/tcp": {
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "5005",
+				},
+			},
+			"8545/tcp": {
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "8545",
+				},
+			},
+		}
+		println("WILL EXPOSE PORT 5005 ON NM IMAGE FOR DEBUGGING!")
+
+		createOpts = docker.CreateContainerOptions{
+			Name: "nethermind_debug",
+			Context: ctx,
+			Config: &docker.Config{
+				Image: imageName,
+				Env:   vars,
+			},
+			HostConfig: hostConfig,
+		}
+	} else if strings.Contains(imageName, "go-ethereum_debug") {
+		hostConfig.PortBindings = map[docker.Port][]docker.PortBinding{
+			"2345/tcp": {
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "2345",
+				},
+			},
+			"8545/tcp": {
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "8545",
+				},
+			},
+		}
+		// add --security-opt="apparmor=unconfined" --cap-add=SYS_PTRACE
+		hostConfig.SecurityOpt = []string{"apparmor=unconfined"}
+		hostConfig.CapAdd = []string{"SYS_PTRACE"}
+		println("WILL EXPOSE PORT 2345 ON NM IMAGE FOR DEBUGGING! Connect DLV debugger to port 2345")
+
+		createOpts = docker.CreateContainerOptions{
+			Name: "go-ethereum_debug",
+			Context: ctx,
+			Config: &docker.Config{
+				Image: imageName,
+				Env:   vars,
+			},
+			HostConfig: hostConfig,
+		}
+	} else { 
+		createOpts = docker.CreateContainerOptions{
+			Context: ctx,
+			Config: &docker.Config{
+				Image: imageName,
+				Env:   vars,
+			},
+		}
 	}
 
 	if opt.Input != nil {
@@ -116,7 +180,7 @@ func (b *ContainerBackend) CreateContainer(ctx context.Context, imageName string
 }
 
 // StartContainer starts a docker container.
-func (b *ContainerBackend) StartContainer(ctx context.Context, containerID string, opt libhive.ContainerOptions) (*libhive.ContainerInfo, error) {
+func (b *ContainerBackend) StartContainer(ctx context.Context, containerID string, opt libhive.ContainerOptions, imageName ...string) (*libhive.ContainerInfo, error) {
 	if opt.CheckLive != 0 && b.proxy == nil {
 		panic("attempt to start container with CheckLive, but proxy is not running")
 	}
@@ -189,6 +253,18 @@ func (b *ContainerBackend) StartContainer(ctx context.Context, containerID strin
 		info.Wait()
 		info.Wait = nil
 	}
+
+	if len(imageName) > 0 {
+		fmt.Printf("Starting container with image: %s\n", imageName[0])
+	}
+
+	// if imageName[0] has "nethermind" in it, sleep for 30 seconds to allow for attaching a debugger
+	if len(imageName) > 0 && ( strings.Contains(imageName[0], "nethermind_debug")) {
+		fmt.Println("Sleeping for 45 seconds for you to attach debugger...")
+		time.Sleep(45 * time.Second) // Sleeps for 30 seconds
+		fmt.Println("Done sleeping.")
+	}
+	
 	return info, checkErr
 }
 

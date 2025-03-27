@@ -1,20 +1,36 @@
+# - client: go-ethereum
+#   nametag: master-git
+#   dockerfile: git
+#   build_args:
+#     github: ethereum/go-ethereum
+#     tag: master
+
+# - client: go-ethereum
+#   nametag: master-git
+#   dockerfile: local
+
+# - client: nethermind
+#   nametag: eth_simulate-git
+#   dockerfile: git
+#   build_args:
+#     github: NethermindEth/nethermind
+#     tag: master
+
+# - client: nethermind
+#   nametag: eth_simulate-git
+#   dockerfile: local
+
+# - client: reth
+#   nametag: multicall-git
+#   dockerfile: git
+#   build_args:
+#     github: paradigmxyz/reth
+#     tag: main
+
 - client: go-ethereum
-  nametag: master-git
-  dockerfile: git
-  build_args:
-    github: ethereum/go-ethereum
-    tag: master
+  nametag: debug
+  dockerfile: debug
 
-- client: nethermind
-  nametag: master-git
-  dockerfile: git
-  build_args:
-    github: NethermindEth/nethermind
-    tag: master
-
-- client: reth
-  nametag: multicall-git
-  dockerfile: git
-  build_args:
-    github: paradigmxyz/reth
-    tag: main
+# - client: nethermind
+#   nametag: debug
+#   dockerfile: debug
